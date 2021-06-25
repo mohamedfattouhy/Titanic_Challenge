@@ -17,7 +17,7 @@ df_train = df_train.drop(['Ticket', 'Cabin'], axis=1)
 
 # Visualize missing values as a matrix
 msno.matrix(df_train)
-plt.show()
+# plt.show()
 
 
 def get_percentage_missing(series):
@@ -30,10 +30,11 @@ def get_percentage_missing(series):
 
 
 # The variable Age contain the most number of missing values (20%)
-print(df_train.apply(get_percentage_missing, axis=0))
+# print(df_train.apply(get_percentage_missing, axis=0))
 
 df_train.dropna(inplace=True)
-df_train.index = [i for i in range(df_train.shape[0])]
+df_train.reset_index(drop=True, inplace=True)
+
 
 # print(df_train.shape)
 # 712 rows and 10 columns
@@ -49,7 +50,7 @@ df_train.groupby('Sex')[['Survived']].aggregate(lambda x: x.mean())
 # plt.figure()
 ax = sns.barplot(x="Pclass", y="Survived", hue="Sex", data=df_train, ci=None, palette=["tab:cyan", "tab:red"])
 plt.title('Survival rate per sex and class')
-plt.show()
+# plt.show()
 
 # Conclusion :
 # It is clear that women are more likely to survive than men, regardless of class.
@@ -58,23 +59,25 @@ plt.show()
 # 259 women and 195 survived
 # 453 men and 93 survived
 
+
 # plt.figure()
 ax1 = sns.barplot(x="Embarked", y="Survived", hue="Sex", data=df_train, ci=None, palette=["tab:cyan", "tab:red"])
 plt.title('Survival rates by boat port')
-plt.show()
+# plt.show()
 
 # Those who embarked at port C, have a better chance of survival
 # The rate is roughly equivalent for the other two ports (S and Q)
 
 
-plt.figure()
+# plt.figure()
 ax2 = sns.barplot(x="Age", y="Survived", data=df_train, color="tab:purple", ci=None)
 plt.title('Survival rate per age')
 plt.xticks(np.arange(1, 80, step=5), fontsize=5)
-plt.show()
+# plt.show()
 
 # Those between the ages of 30 and 50 are less likely to die
 # And those under the age of 15 or over 70 are likely to survive
+
 
 
 def prediction(Pclass, Age, Sex):
@@ -136,11 +139,20 @@ def prediction_accuracy(data_test_1, data_test_2):
 
 
 # We import the test set
+
 df_test_1 = pd.read_csv("Data/gender_submission.csv")
 df_test_2 = pd.read_csv("Data/test.csv")
 
+df_test_2 = df_test_2[["Age", "Pclass", "Sex"]]
+df_test_2.dropna(inplace=True)
+df_test_1 = df_test_1.loc[df_test_2.index, :]
 
-print(prediction_accuracy(data_test_1=df_test_1, data_test_2=df_test_2))
+df_test_2.reset_index(drop=True, inplace=True)
+df_test_1.reset_index(drop=True, inplace=True)
+
+
+
+# print(prediction_accuracy(data_test_1=df_test_1, data_test_2=df_test_2))
 
 # 72% of the values from test set were correctly predicted
 
@@ -148,6 +160,9 @@ print(prediction_accuracy(data_test_1=df_test_1, data_test_2=df_test_2))
 #----------------------------------------------------------------------#
 
 # Logistic Regression
+
+
+# Survival by different age groups
 
 df1 = pd.DataFrame(df_train[df_train["Age"]<=20].mean()).T
 df2 = pd.DataFrame(df_train[(df_train["Age"] <=40) & (20 < df_train["Age"])].mean()).T
@@ -159,26 +174,23 @@ df_merge["Age"] = ["0-20", "20-40", "40-60", "60-80"]
 df_merge = df_merge[['Survived', 'Age']]
 
 
-# df5 = {'Age': [20, 40, 60, 80], 'Rates': [df1.iloc[1,], df2.iloc[1,], df3.iloc[1,], df4.iloc[1,]]}
-# df5 = pd.DataFrame(data=df5)
-
-plt.figure()
+# plt.figure()
 ax3 = sns.barplot(x="Age", y="Survived", data=df_merge, ci=None)
 plt.title('Survival rate by age group')
-plt.show()
+# plt.show()
 
 
 data = pd.read_csv("Data/train.csv")
-# data = data.drop(['Ticket', 'Name', 'PassengerId', 'Parch', 'Embarked', 'SibSp', 
-#                     'Sex', 'Cabin', 'Survived'], axis=1)
 data = data[['Pclass', 'Age', 'Fare', 'Survived']]
 data.dropna(inplace=True)
+data.reset_index(drop=True, inplace=True)
+
+# data = data.drop(['Ticket', 'Name', 'PassengerId', 'Parch', 'Embarked', 'SibSp', 
+#                     'Sex', 'Cabin', 'Survived'], axis=1)
 
 
 y = data["Survived"]  # Variable to explain
 data = data.drop(['Survived'], axis=1)  # Explanatory variables
-
-data.index = [i for i in range(data.shape[0])]
 
 # df_train.select_dtypes(np.number).drop(["PassengerId"], axis=1)
 
@@ -188,16 +200,16 @@ data.index = [i for i in range(data.shape[0])]
 
 
 # None penalty and we use a Newton method for the approximation of the coefficient
-modele_logit = LogisticRegression(penalty='none', solver='newton-cg') 
+modele_logit = LogisticRegression(penalty='none', solver='newton-cg')
 
 # We fit the model
 modele_logit.fit(data, y)
 
 # We gather all the information in a dataframe
-result_1 = pd.DataFrame(np.concatenate([modele_logit.intercept_.reshape(-1,1),
+result_1 = pd.DataFrame(np.concatenate([modele_logit.intercept_.reshape(-1, 1),
                              modele_logit.coef_], axis=1),
-             index = ["coef"],
-             columns = ["constante"]+list(data.columns)).T
+                             index=["coef"],
+                             columns=["constante"]+list(data.columns)).T
 
 
 # print(result_1)
@@ -226,3 +238,83 @@ result_2 = model.fit()
 # individual belongs to a high class.
 
 # The variables Age and Fare did not appear to have a significant role in the chance of survival.
+
+
+
+s = np.array(result_1)
+r = data_stat.dot(s)
+p = np.exp(r) / (1+np.exp(r))
+
+l = []
+c = 0
+
+for i in range(len(y)):
+
+    if p.iloc[i, 0] > 0.5:
+        l.append(1)
+    else:
+        l.append(0)
+
+    if y[i] == l[i]:
+        c += 1
+
+score_train_set = c/len(y)
+
+# print(score_train_set)
+# Logistic regression correctly predicts 70% for the train set (taking a threshold
+# of 0.5 for the probability of attribution)
+
+df_test_3 = pd.read_csv("Data/test.csv")
+df_test_3 = df_test_3[["Age", "Pclass", "Fare"]]
+df_test_3.dropna(inplace=True)
+df_test_3.reset_index(drop=True, inplace=True)
+s1 = np.array(result_1)
+r1 = sm.add_constant(df_test_3[["Pclass", "Age", "Fare"]]).dot(s1)
+p1 = np.exp(r1) / (1+np.exp(r1))
+
+
+df_test_4 = pd.read_csv("Data/gender_submission.csv")
+df_test_4 = df_test_4.loc[df_test_3.index, :]
+df_test_4.dropna(inplace=True)
+df_test_4.reset_index(drop=True, inplace=True)
+
+
+y1 = list(df_test_4["Survived"])
+
+l1 = []
+c1 = 0
+
+
+for i in range(len(y1)):
+
+    if p1.iloc[i, 0] > 0.5:
+        l1.append(1)  
+    else:
+        l1.append(0)
+
+    if y1[i] == l1[i]:
+        c1 += 1
+
+score_test_set = c1/len(y1)
+
+# print(score_test_set)
+# Logistic regression correctly predicts 55% for the test set (taking a threshold 
+# of 0.5 for the probability of attribution)
+
+
+
+# Logistics functions
+
+plt.figure()
+plt.scatter(r1.iloc[:,  0], p1.iloc[:, 0])
+plt.title(label="logistic function on test data")
+plt.xlabel(xlabel="x")
+plt.ylabel(ylabel="Probability")
+plt.show()
+
+plt.figure()
+plt.scatter(r.iloc[:, 0], p.iloc[:, 0])
+plt.title(label="logistic function on train data")
+plt.xlabel(xlabel="x")
+plt.ylabel(ylabel="Probability")
+plt.show()
