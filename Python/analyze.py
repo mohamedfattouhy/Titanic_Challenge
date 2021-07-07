@@ -9,6 +9,7 @@ import statsmodels.api as sm
 from sklearn.linear_model import LogisticRegression
 import missingno as msno
 from sklearn.metrics import confusion_matrix, classification_report
+from sklearn.neighbors import KNeighborsClassifier
 
 
 pd.set_option("display.max_column", 12)
@@ -358,6 +359,8 @@ ax_1.yaxis.set_ticklabels(['Not Survived', 'Survived'])
 # plt.show()
 plt.close()
 
+print(classification_report(y_pred=y_pred_logit, y_true=y_true))
+# F1-score is low for label "Survived" and is high for label "Not Survived"
 
 
 # We gather all the information in a dataframe
@@ -443,12 +446,12 @@ for i in range(len(y)):
 score_train_set = c/len(y)
 
 # print(score_train_set)
-# Logistic regression correctly predicts 70% for the train set (taking a threshold
+# Logistic regression correctly predicts 79% for the train set (taking a threshold
 # of 0.5 for the probability of attribution)
 
 
 
-# pred_real = pd.DataFrame(data=[y, l], index=['Real', 'Predict']).T
+pred_real = pd.DataFrame(data=[y, l], index=['Real', 'Predict']).T
 # print(pred_real)
 
 confusion = pd.crosstab(pred_real["Real"], pred_real["Predict"])
@@ -463,11 +466,12 @@ ll = np.array(l)
 
 
 df_test_3 = pd.read_csv("Data/test.csv")
-df_test_3 = df_test_3[["Age", "Pclass", "Fare"]]
+df_test_3 = df_test_3[["Age", "Pclass", "Fare", "Sex"]]
+df_test_3["Sex"] = df_test_3["Sex"].astype('category').cat.codes
 df_test_3.dropna(inplace=True)
 df_test_3.reset_index(drop=True, inplace=True)
 s1 = np.array(result_1)
-r1 = sm.add_constant(df_test_3[["Pclass", "Age", "Fare"]]).dot(s1)
+r1 = sm.add_constant(df_test_3).dot(s1)
 p1 = np.exp(r1) / (1+np.exp(r1))
 
 
@@ -496,12 +500,12 @@ for i in range(len(y1)):
 score_test_set = c1/len(y1)
 
 # print(score_test_set)
-# Logistic regression correctly predicts 55% for the test set (taking a threshold 
+# Logistic regression correctly predicts 63% for the test set (taking a threshold 
 # of 0.5 for the probability of attribution)
 
 
 
-# # Logistics functions
+# Logistics functions
 
 plt.figure()
 plt.scatter(r1.iloc[:,  0], p1.iloc[:, 0])
@@ -523,3 +527,40 @@ plt.ylabel(ylabel="survival probability")
 plt.legend()
 # plt.show()
 plt.close()
+
+
+#----------------------------------------------------------------#
+
+# kneighborsclassifier'method (KNN)
+
+model_knn = KNeighborsClassifier()
+result_3 = model_knn.fit(X=data, y=y)
+
+# print(model_knn.score(X=data, y=y))
+# print(model_knn.score(X=df_test_3, y=y_true))
+
+# 79% of the values were correctly predicted on the train set
+# 44% of the values were correctly predicted on the test set
+
+# print(model_knn.predict_proba(X=data))
+# print(model_knn.predict_proba(X=df_test_3))
+
+
+# print(model_knn.predict(X=data))
+# print(model_knn.predict(X=df_test_3))
+
+y_pred_knn = model_knn.predict(X=df_test_3)
+
+cm_knn = confusion_matrix(y_pred=y_pred_knn, y_true=y_true)
+ax_3 = plt.subplot()
+sns.heatmap(cm_knn, annot=True, fmt='g', ax=ax_3)
+ax_3.set_xlabel('Predicted labels')
+ax_3.set_ylabel('True labels') 
+ax_3.set_title('Confusion Matrix')
+ax_3.xaxis.set_ticklabels(['Not Survived', 'Survived'])
+ax_3.yaxis.set_ticklabels(['Not Survived', 'Survived'])
+# plt.show()
+plt.close()
+
+# print(classification_report(y_pred=y_pred_knn, y_true=y_true))
+# F1-score is low (for both labels)
