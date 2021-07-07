@@ -10,6 +10,7 @@ from sklearn.linear_model import LogisticRegression
 import missingno as msno
 from sklearn.metrics import confusion_matrix, classification_report
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import accuracy_score
 
 
 pd.set_option("display.max_column", 12)
@@ -359,7 +360,7 @@ ax_1.yaxis.set_ticklabels(['Not Survived', 'Survived'])
 # plt.show()
 plt.close()
 
-print(classification_report(y_pred=y_pred_logit, y_true=y_true))
+# print(classification_report(y_pred=y_pred_logit, y_true=y_true))
 # F1-score is low for label "Survived" and is high for label "Not Survived"
 
 
@@ -533,7 +534,7 @@ plt.close()
 
 # kneighborsclassifier'method (KNN)
 
-model_knn = KNeighborsClassifier()
+model_knn = KNeighborsClassifier(n_neighbors=2)
 result_3 = model_knn.fit(X=data, y=y)
 
 # print(model_knn.score(X=data, y=y))
@@ -551,6 +552,12 @@ result_3 = model_knn.fit(X=data, y=y)
 
 y_pred_knn = model_knn.predict(X=df_test_3)
 
+# Prediction for me...
+# df_test_3 = df_test_3.append(pd.DataFrame(np.array([22, 3, 7, 1]).reshape(1, 4), columns=list(df_test_3.columns)),
+#                                 ignore_index=True)
+# y_pred_knn = model_knn.predict(X=df_test_3)
+# print(y_pred_knn[-1])
+
 cm_knn = confusion_matrix(y_pred=y_pred_knn, y_true=y_true)
 ax_3 = plt.subplot()
 sns.heatmap(cm_knn, annot=True, fmt='g', ax=ax_3)
@@ -564,3 +571,27 @@ plt.close()
 
 # print(classification_report(y_pred=y_pred_knn, y_true=y_true))
 # F1-score is low (for both labels)
+
+scores_train = []
+scores_test = []
+
+for k in range(1, 10):
+
+   classifier = KNeighborsClassifier(n_neighbors=k)
+   classifier.fit(X=data, y=y)
+   scores_train.append(classifier.score(X=data, y=y))
+   y_pred = classifier.predict(X=df_test_3)
+   scores_test.append(accuracy_score(y_true=y_true, y_pred=y_pred))
+
+
+plt.figure()
+plt.plot(range(1, 10), scores_train, c="red", label="Train")
+plt.plot(range(1, 10), scores_test, c="purple", label="Test")
+plt.xlabel("Value of k")
+plt.ylabel("Accuracy")
+plt.legend()
+# plt.show()
+plt.close()
+
+# The best k seems to be k=1 (score: 98%) for the train set
+# The best compromise between the train and test scores seems to be k=2
